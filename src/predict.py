@@ -3,7 +3,9 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
+
 
 df = pd.read_csv("/Users/princemaphupha/Desktop/Visual Studio Code/trading/data/Binance_BTCUSDT_1h.csv")
 
@@ -65,7 +67,7 @@ def create_sequences(data, seq_length):
         y.append(data[i+seq_length, 0])  # Predict 'Close' price
     return np.array(X), np.array(y)
 
-print("Step 3: Sequences Created for LSTM")
+print("Step 4: Sequences Created for LSTM")
 
 SEQ_LENGTH = 168  # Use past 168 hours to predict next hour
 X, y = create_sequences(scaled_data, SEQ_LENGTH)
@@ -75,37 +77,20 @@ split = int(0.8 * len(X))
 X_train, X_test = X[:split], X[split:]
 y_train, y_test = y[:split], y[split:]
 
-print("Step 5: Split into Training & Testing Successfully")
+# Load the model
+model = load_model('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/model.keras')
 
-# Step 6: Build the LSTM Model
-model = Sequential()
-model.add(LSTM(50, activation='relu', return_sequences=True, input_shape=(SEQ_LENGTH, X.shape[2])))
-model.add(LSTM(50, activation='relu'))
-model.add(Dense(1))  # Predict 'Close' price
-
-print("Step 6: LSTM Model Successfully Built")
-
-model.compile(optimizer='adam', loss='mse')
-model.summary()
-
-# Step 7: Train the Model
-history = model.fit(X_train, y_train, epochs=20, batch_size=32, validation_data=(X_test, y_test))
-
-print("Step 7: LSTM Model Successfully Trained")
-
-# Step 8: Make Predictions
+# Use the model for predictions
 predictions = model.predict(X_test)
 
-print("Step 8: Predictions have been generated")
+print(predictions)
 
-# Step 9: Inverse Transform Predictions
 scaled_predictions = np.zeros((len(predictions), scaled_data.shape[1]))
 scaled_predictions[:, 0] = predictions[:, 0]  # Only replace 'Close' column
 predicted_close = scaler.inverse_transform(scaled_predictions)[:, 0]
 
-print("Step 9: Inverse transform the predictions")
-
 # Step 10: Plot Actual vs Predicted
+'''
 plt.figure(figsize=(12, 6))
 plt.plot(df.index[-len(y_test):], df['Close'].iloc[-len(y_test):], label="Actual Prices", color='blue')
 plt.plot(df.index[-len(y_test):], predicted_close, label="Predicted Prices", color='red')
@@ -114,8 +99,7 @@ plt.ylabel('Close Price')
 plt.title("Actual vs Predicted Close Prices")
 plt.legend()
 plt.show()
-
-print("Step 10: Data has been plotted")
+'''
 
 # Step 11: Predict the Next 7 Days (168 Hours)
 last_sequence = scaled_data[-SEQ_LENGTH:]  # Use the last available sequence
@@ -130,16 +114,13 @@ for _ in range(168):  # Predict next 168 hours
     new_row[0, 0] = next_prediction[0, 0]  # Replace 'Close'
     last_sequence = np.vstack([last_sequence[1:], new_row])
 
-print("Step 11: Predicted the next 168 Hours")
-
 # Inverse transform future predictions
 scaled_future = np.zeros((len(future_predictions), scaled_data.shape[1]))
 scaled_future[:, 0] = future_predictions
 future_close = scaler.inverse_transform(scaled_future)[:, 0]
 
-print("Step 12: Inverse Transform Future Predictions")
+print(future_close)
 
-# Plot Future Predictions
 plt.figure(figsize=(12, 6))
 plt.plot(range(168), future_close, label="Predicted Next 7 Days", color='green')
 plt.xlabel('Hours Ahead')
@@ -148,8 +129,3 @@ plt.title("Predicted Close Prices for Next 7 Days")
 plt.legend()
 plt.show()
 
-print("Step 13: Plot all future predictions")
-
-model.save('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/model.keras')
-model.save('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/model.h5')
-model.export('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models')
