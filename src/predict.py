@@ -85,12 +85,16 @@ predictions = model.predict(X_test)
 
 print(predictions)
 
-scaled_predictions = np.zeros((len(predictions), scaled_data.shape[1]))
-scaled_predictions[:, 0] = predictions[:, 0]  # Only replace 'Close' column
+# Fill scaled_predictions with mean values from the original scaled_data
+mean_values = np.mean(scaled_data, axis=0)  # Calculate column means
+scaled_predictions = np.tile(mean_values, (len(predictions), 1))
+scaled_predictions[:, 0] = predictions[:, 0]  # Replace 'Close' column
 predicted_close = scaler.inverse_transform(scaled_predictions)[:, 0]
 
 # Step 10: Plot Actual vs Predicted
+
 '''
+
 plt.figure(figsize=(12, 6))
 plt.plot(df.index[-len(y_test):], df['Close'].iloc[-len(y_test):], label="Actual Prices", color='blue')
 plt.plot(df.index[-len(y_test):], predicted_close, label="Predicted Prices", color='red')
@@ -99,6 +103,7 @@ plt.ylabel('Close Price')
 plt.title("Actual vs Predicted Close Prices")
 plt.legend()
 plt.show()
+
 '''
 
 # Step 11: Predict the Next 7 Days (168 Hours)
@@ -111,7 +116,8 @@ for _ in range(168):  # Predict next 168 hours
     
     # Update the sequence with the predicted value
     new_row = np.zeros((1, scaled_data.shape[1]))
-    new_row[0, 0] = next_prediction[0, 0]  # Replace 'Close'
+    #noise = np.random.normal(0, 0.01)  # Small noise with a mean of 0 and std of 0.01
+    new_row[0, 0] = next_prediction[0, 0]
     last_sequence = np.vstack([last_sequence[1:], new_row])
 
 # Inverse transform future predictions

@@ -4,6 +4,8 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Bidirectional
 import matplotlib.pyplot as plt
 
 
@@ -80,9 +82,12 @@ y_train, y_test = y[:split], y[split:]
 print("Step 5: Split into Training & Testing Successfully")
 
 # Step 6: Build the LSTM Model
+
 model = Sequential()
 model.add(LSTM(50, activation='relu', return_sequences=True, input_shape=(SEQ_LENGTH, X.shape[2])))
+model.add(Dropout(0.2))  # 20% dropout
 model.add(LSTM(50, activation='relu'))
+model.add(Dropout(0.2))
 model.add(Dense(1))  # Predict 'Close' price
 
 print("Step 6: LSTM Model Successfully Built")
@@ -152,7 +157,6 @@ plt.show()
 
 print("Step 13: Plot all future predictions")
 
-model.save('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/model.keras')
-model.save('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/model.h5')
+model.save('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/modelBTC.keras')
+model.save('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models/modelBTC.h5')
 model.export('/Users/princemaphupha/Desktop/Visual Studio Code/trading/models')
-
